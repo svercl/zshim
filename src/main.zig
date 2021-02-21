@@ -1,8 +1,5 @@
-const c = @cImport({
-    @cInclude("windows.h");
-});
-
 const std = @import("std");
+const winapi = @import("winapi.zig");
 
 const ascii = std.ascii;
 const fmt = std.fmt;
@@ -13,14 +10,14 @@ const process = std.process;
 
 const Allocator = mem.Allocator;
 
-export fn handlerRoutine(dwCtrlType: c.DWORD) c.BOOL {
+export fn handlerRoutine(dwCtrlType: winapi.DWORD) winapi.BOOL {
     return switch (dwCtrlType) {
-        c.CTRL_C_EVENT => c.TRUE,
-        c.CTRL_BREAK_EVENT => c.TRUE,
-        c.CTRL_CLOSE_EVENT => c.TRUE,
-        c.CTRL_LOGOFF_EVENT => c.TRUE,
-        c.CTRL_SHUTDOWN_EVENT => c.TRUE,
-        else => c.FALSE,
+        winapi.CTRL_C_EVENT => winapi.TRUE,
+        winapi.CTRL_BREAK_EVENT => winapi.TRUE,
+        winapi.CTRL_CLOSE_EVENT => winapi.TRUE,
+        winapi.CTRL_LOGOFF_EVENT => winapi.TRUE,
+        winapi.CTRL_SHUTDOWN_EVENT => winapi.TRUE,
+        else => winapi.FALSE,
     };
 }
 
@@ -107,7 +104,7 @@ pub fn main() anyerror!void {
         }
     }
 
-    if (c.SetConsoleCtrlHandler(handlerRoutine, c.TRUE) != c.TRUE) {
+    if (winapi.SetConsoleCtrlHandler(handlerRoutine, winapi.TRUE) != winapi.TRUE) {
         std.log.crit("Cannot set ctrl handler", .{});
         return;
     }
