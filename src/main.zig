@@ -111,5 +111,6 @@ pub fn main() anyerror!void {
 
     // Spawn child process
     var child = try std.ChildProcess.init(cmd_args.items, gpa);
-    const term = try child.spawnAndWait();
+    defer child.deinit();
+    _ = try child.spawnAndWait();
 }
