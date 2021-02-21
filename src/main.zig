@@ -1,3 +1,7 @@
+const c = @cImport({
+    @cInclude("windows.h");
+});
+
 const std = @import("std");
 
 const ascii = std.ascii;
@@ -8,6 +12,17 @@ const mem = std.mem;
 const process = std.process;
 
 const Allocator = mem.Allocator;
+
+export fn handlerRoutine(dwCtrlType: c.DWORD) c.BOOL {
+    return switch (dwCtrlType) {
+        c.CTRL_C_EVENT => c.TRUE,
+        c.CTRL_BREAK_EVENT => c.TRUE,
+        c.CTRL_CLOSE_EVENT => c.TRUE,
+        c.CTRL_LOGOFF_EVENT => c.TRUE,
+        c.CTRL_SHUTDOWN_EVENT => c.TRUE,
+        else => c.FALSE,
+    };
+}
 
 fn removeSuffix(comptime T: type, slice: []const T, suffix: []const T) []const T {
     if (mem.endsWith(u8, slice, suffix)) {
@@ -90,6 +105,11 @@ pub fn main() anyerror!void {
         while (it.next()) |cfg_arg| {
             try cmd_args.append(cfg_arg);
         }
+    }
+
+    if (c.SetConsoleCtrlHandler(handlerRoutine, c.TRUE) != c.TRUE) {
+        std.log.crit("Cannot set ctrl handler", .{});
+        return;
     }
 
     // Spawn child process
