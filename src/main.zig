@@ -48,8 +48,7 @@ pub fn main() anyerror!void {
 
     // Shim filename
     const program_name = args[0];
-    var shim_path = fs.path.basename(program_name);
-    shim_path = pathWithExtension(gpa, shim_path, "shim") catch {
+    var shim_path = pathWithExtension(gpa, program_name, "shim") catch {
         std.log.crit("Cannot make out shim path.", .{});
         return;
     };
