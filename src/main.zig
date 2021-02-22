@@ -60,7 +60,7 @@ pub fn main() anyerror!void {
     defer cfg.deinit();
 
     // Open shim file for reading
-    var shim_file = fs.cwd().openFile(shim_path, .{}) catch {
+    var shim_file = fs.openFileAbsolute(shim_path, .{}) catch {
         std.log.crit("Unable to open shim file. ({})", .{shim_path});
         return;
     };
