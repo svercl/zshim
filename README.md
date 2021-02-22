@@ -2,7 +2,7 @@
 
 zshim is the [`shim`](https://github.com/71/scoop-better-shimexe/) written in Zig.
 
-## Installation
+## Building
 
 Requirements:
 - [Zig](https://ziglang.org/)
