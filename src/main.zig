@@ -47,8 +47,9 @@ pub fn main() anyerror!void {
     defer process.argsFree(gpa, args);
 
     // Shim filename
-    const program_name = args[0];
-    var shim_path = pathWithExtension(gpa, program_name, "shim") catch {
+    var program_path = try fs.selfExePathAlloc(gpa);
+    defer gpa.free(program_path);
+    var shim_path = pathWithExtension(gpa, program_path, "shim") catch {
         std.log.crit("Cannot make out shim path.", .{});
         return;
     };
