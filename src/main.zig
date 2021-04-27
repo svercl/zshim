@@ -32,7 +32,7 @@ fn removeSuffix(comptime T: type, slice: []const T, suffix: []const T) []const T
 fn pathWithExtension(allocator: *mem.Allocator, path: []const u8, extension: []const u8) ![]const u8 {
     const path_extension = fs.path.extension(path);
     const path_no_extension = removeSuffix(u8, path, path_extension);
-    return fmt.allocPrint(allocator, "{}.{}", .{ path_no_extension, extension });
+    return fmt.allocPrint(allocator, "{s}.{s}", .{ path_no_extension, extension });
 }
 
 // trimSpaces removes spaces from the beginning and end of a string
@@ -60,7 +60,7 @@ pub fn main() anyerror!void {
 
     // Open shim file for reading
     var shim_file = fs.openFileAbsolute(shim_path, .{}) catch {
-        std.log.crit("Unable to open shim file. ({})", .{shim_path});
+        std.log.crit("Unable to open shim file. ({s})", .{shim_path});
         return;
     };
     defer shim_file.close();
