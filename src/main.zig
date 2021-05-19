@@ -70,29 +70,27 @@ pub fn main() anyerror!void {
     var line_buf: [1024]u8 = undefined;
 
     while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
+        // The lines should look like this: `key = value`
         // Find index of equals, if it doesn't exist we just skip this line
         const equals_index = mem.indexOfScalar(u8, line, '=') orelse continue;
         const key = trimSpaces(line[0..equals_index]);
         const value = trimSpaces(line[equals_index + 1 .. line.len]);
-        // Put in the map
         try cfg.set(key, value);
     }
 
-    // Arguments sent to the child
+    // Arguments sent to the child process
     var cmd_args = std.ArrayList([]const u8).init(ally);
 
-    // Add the program name from the path
+    // Add the program name from shim file
     if (cfg.get("path")) |cfg_path| {
         try cmd_args.append(cfg_path);
     } else {
-        std.log.crit("Path not found in shim file", .{});
+        std.log.crit("`path` not found in shim file", .{});
         return;
     }
 
-    // Pass all arguments except program name
-    for (args[1..]) |arg| {
-        try cmd_args.append(arg);
-    }
+    // Pass all arguments from our process except program name
+    try cmd_args.appendSlice(args[1..]);
 
     // Pass all arguments from shim file
     if (cfg.get("args")) |cfg_args| {
