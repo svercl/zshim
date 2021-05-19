@@ -1,5 +1,5 @@
 const std = @import("std");
-const winapi = @import("winapi.zig");
+const win = std.os.windows;
 
 const ascii = std.ascii;
 const fmt = std.fmt;
@@ -8,14 +8,14 @@ const fs = std.fs;
 const mem = std.mem;
 const process = std.process;
 
-export fn handlerRoutine(dwCtrlType: winapi.DWORD) winapi.BOOL {
+export fn handlerRoutine(dwCtrlType: win.DWORD) callconv(win.WINAPI) win.BOOL {
     return switch (dwCtrlType) {
-        winapi.CTRL_C_EVENT => winapi.TRUE,
-        winapi.CTRL_BREAK_EVENT => winapi.TRUE,
-        winapi.CTRL_CLOSE_EVENT => winapi.TRUE,
-        winapi.CTRL_LOGOFF_EVENT => winapi.TRUE,
-        winapi.CTRL_SHUTDOWN_EVENT => winapi.TRUE,
-        else => winapi.FALSE,
+        win.CTRL_C_EVENT => win.TRUE,
+        win.CTRL_BREAK_EVENT => win.TRUE,
+        win.CTRL_CLOSE_EVENT => win.TRUE,
+        win.CTRL_LOGOFF_EVENT => win.TRUE,
+        win.CTRL_SHUTDOWN_EVENT => win.TRUE,
+        else => win.FALSE,
     };
 }
 
@@ -100,10 +100,7 @@ pub fn main() anyerror!void {
         }
     }
 
-    if (winapi.SetConsoleCtrlHandler(handlerRoutine, winapi.TRUE) != winapi.TRUE) {
-        std.log.crit("Cannot set ctrl handler", .{});
-        return;
-    }
+    try win.SetConsoleCtrlHandler(handlerRoutine, true);
 
     // Spawn child process
     var child = try std.ChildProcess.init(cmd_args.items, ally);
