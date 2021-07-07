@@ -16,6 +16,10 @@ cd zshim
 zig build -Drelease-safe
 ```
 
+## Installation
+
+The easiest way to install this is to replace the `shim.exe` in your scoop install folder. If you use vanilla, this will be `$SCOOP/support/shimexe/bin/shim.exe` and running the command `scoop reset *` will replace all shims with this one.
+
 ## Limitations
 
 Does not handle elevation of any kind. (PRs welcomed)
