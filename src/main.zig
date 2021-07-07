@@ -75,7 +75,7 @@ pub fn main() anyerror!void {
         const equals_index = mem.indexOfScalar(u8, line, '=') orelse continue;
         const key = trimSpaces(line[0..equals_index]);
         const value = trimSpaces(line[equals_index + 1 .. line.len]);
-        try cfg.set(key, value);
+        try cfg.put(key, value);
     }
 
     // Arguments sent to the child process
