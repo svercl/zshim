@@ -5,11 +5,10 @@ zshim is the [`shim`](https://github.com/71/scoop-better-shimexe/) written in Zi
 ## Building
 
 Requirements:
-- [Zig](https://ziglang.org/)
+- [Zig 0.8](https://ziglang.org/)
 - git
 
 Once you have those, then it's as easy as:
-
 ``` shell
 git clone https://github.com/bradms/zshim.git
 cd zshim
