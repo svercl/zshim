@@ -10,6 +10,12 @@ pub fn build(b: *Builder) void {
     exe.linkLibC();
     exe.install();
 
+    exe.single_threaded = true;
+
+    if (mode != .Debug) {
+        exe.strip = true;
+    }
+
     const run_cmd = exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
