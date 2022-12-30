@@ -1,5 +1,5 @@
 const std = @import("std");
-const win = std.os.windows;
+const windows = std.os.windows;
 
 const ascii = std.ascii;
 const fmt = std.fmt;
@@ -8,18 +8,19 @@ const fs = std.fs;
 const mem = std.mem;
 const process = std.process;
 
-export fn handlerRoutine(dwCtrlType: win.DWORD) callconv(win.WINAPI) win.BOOL {
+export fn handlerRoutine(dwCtrlType: windows.DWORD) callconv(windows.WINAPI) windows.BOOL {
     return switch (dwCtrlType) {
-        win.CTRL_C_EVENT => win.TRUE,
-        win.CTRL_BREAK_EVENT => win.TRUE,
-        win.CTRL_CLOSE_EVENT => win.TRUE,
-        win.CTRL_LOGOFF_EVENT => win.TRUE,
-        win.CTRL_SHUTDOWN_EVENT => win.TRUE,
-        else => win.FALSE,
+        windows.CTRL_C_EVENT,
+        windows.CTRL_BREAK_EVENT,
+        windows.CTRL_CLOSE_EVENT,
+        windows.CTRL_LOGOFF_EVENT,
+        windows.CTRL_SHUTDOWN_EVENT,
+        => windows.TRUE,
+        else => windows.FALSE,
     };
 }
 
-// removeSuffix removes the suffix from the slice
+/// removeSuffix removes the suffix from the slice
 fn removeSuffix(comptime T: type, slice: []const T, suffix: []const T) []const T {
     if (mem.endsWith(u8, slice, suffix)) {
         return slice[0 .. slice.len - suffix.len];
@@ -28,15 +29,15 @@ fn removeSuffix(comptime T: type, slice: []const T, suffix: []const T) []const T
     }
 }
 
-// pathWithExtension returns the path with the specified extension
+/// pathWithExtension returns the path with the specified extension
 fn pathWithExtension(allocator: mem.Allocator, path: []const u8, extension: []const u8) ![]const u8 {
     const path_extension = fs.path.extension(path);
     const path_no_extension = removeSuffix(u8, path, path_extension);
     return fmt.allocPrint(allocator, "{s}.{s}", .{ path_no_extension, extension });
 }
 
-// trimSpaces removes spaces from the beginning and end of a string
-fn trimSpaces(slice: []const u8) []const u8 {
+/// trimSpaces removes spaces from the beginning and end of a string
+fn trimAsciiSpaces(slice: []const u8) []const u8 {
     return mem.trim(u8, slice, &ascii.whitespace);
 }
 
@@ -66,15 +67,15 @@ pub fn main() anyerror!void {
     defer shim_file.close();
 
     // Go through the shim file and collect key-value pairs
-    var reader = shim_file.reader();
+    const reader = shim_file.reader();
     var line_buf: [1024]u8 = undefined;
 
     while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
         // The lines should look like this: `key = value`
         // Find index of equals, if it doesn't exist we just skip this line
         const equals_index = mem.indexOfScalar(u8, line, '=') orelse continue;
-        const key = trimSpaces(line[0..equals_index]);
-        const value = trimSpaces(line[equals_index + 1 .. line.len]);
+        const key = trimAsciiSpaces(line[0..equals_index]);
+        const value = trimAsciiSpaces(line[equals_index + 1 .. line.len]);
         try cfg.put(key, value);
     }
 
@@ -100,7 +101,7 @@ pub fn main() anyerror!void {
         }
     }
 
-    try win.SetConsoleCtrlHandler(handlerRoutine, true);
+    try windows.SetConsoleCtrlHandler(handlerRoutine, true);
 
     // Spawn child process
     var child = std.ChildProcess.init(cmd_args.items, ally);
