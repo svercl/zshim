@@ -1,15 +1,18 @@
 # `zshim`
 
-zshim is the [`shim`](https://github.com/71/scoop-better-shimexe/) written in Zig.
+zshim is the [`shim`](https://github.com/71/scoop-better-shimexe/) written in
+Zig.
 
 ## Building
 
 Requirements:
-- [Zig 0.8](https://ziglang.org/)
+
+- [Zig 0.11.0-dev.1011+40ba4d4a8](https://ziglang.org/)
 - git
 
 Once you have those, then it's as easy as:
-``` shell
+
+```shell
 git clone https://github.com/bradms/zshim.git
 cd zshim
 zig build -Drelease-safe
@@ -17,12 +20,14 @@ zig build -Drelease-safe
 
 ## Installation
 
-The easiest way to install this is to replace the `shim.exe` in your scoop install folder. If you use vanilla, this will be `$SCOOP/support/shimexe/bin/shim.exe` and running the command `scoop reset *` will replace all shims with this one.
+The easiest way to install this is to replace the `shim.exe` in your scoop
+install folder. If you use vanilla, this will be
+`$SCOOP/support/shimexe/bin/shim.exe` and running the command `scoop reset *`
+will replace all shims with this one.
 
 ## Limitations
 
 Does not handle elevation of any kind. (PRs welcomed)
-
 
 ## Similar works
 
