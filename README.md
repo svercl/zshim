@@ -13,7 +13,7 @@ Requirements:
 Once you have those, then it's as easy as:
 
 ```shell
-git clone https://github.com/bradms/zshim.git
+git clone https://github.com/svercl/zshim.git
 cd zshim
 zig build -Drelease-safe
 ```
