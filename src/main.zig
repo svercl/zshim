@@ -48,8 +48,6 @@ pub fn main() anyerror!void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const args = try std.process.argsAlloc(allocator);
-
     // Shim filename matches our name
     const program_path = try std.fs.selfExePathAlloc(allocator);
     const shim_path = pathWithExtension(allocator, program_path, "shim") catch {
@@ -89,6 +87,7 @@ pub fn main() anyerror!void {
     }
 
     // Pass all arguments from our process except program name
+    const args = try std.process.argsAlloc(allocator);
     try cmd_args.appendSlice(args[1..]);
 
     // Pass all arguments from shim file
@@ -101,7 +100,7 @@ pub fn main() anyerror!void {
 
     try windows.SetConsoleCtrlHandler(handlerRoutine, true);
 
-    // Run the actual program.
+    // Run the actual program
     var child = std.ChildProcess.init(cmd_args.items, allocator);
     _ = try child.spawnAndWait();
 }
