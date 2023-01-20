@@ -79,12 +79,11 @@ pub fn main() anyerror!void {
     var cmd_args = std.ArrayList([]const u8).init(allocator);
 
     // Add the program name from shim file
-    if (cfg.get("path")) |cfg_path| {
-        try cmd_args.append(cfg_path);
-    } else {
+    const path = cfg.get("path") orelse {
         std.log.err("`path` not found in shim file", .{});
         return;
-    }
+    };
+    try cmd_args.append(path);
 
     // Pass all arguments from our process except program name
     const args = try std.process.argsAlloc(allocator);
