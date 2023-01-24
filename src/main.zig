@@ -1,13 +1,6 @@
 const std = @import("std");
 const windows = std.os.windows;
 
-const ascii = std.ascii;
-const fmt = std.fmt;
-const heap = std.heap;
-const fs = std.fs;
-const mem = std.mem;
-const process = std.process;
-
 export fn handlerRoutine(dwCtrlType: windows.DWORD) callconv(windows.WINAPI) windows.BOOL {
     return switch (dwCtrlType) {
         windows.CTRL_C_EVENT,
@@ -20,47 +13,52 @@ export fn handlerRoutine(dwCtrlType: windows.DWORD) callconv(windows.WINAPI) win
     };
 }
 
-/// removeSuffix removes the suffix from the slice
+/// removes the suffix from the slice.
 fn removeSuffix(comptime T: type, slice: []const T, suffix: []const T) []const T {
-    if (mem.endsWith(u8, slice, suffix)) {
-        return slice[0 .. slice.len - suffix.len];
-    } else {
-        return slice;
-    }
+    return if (std.mem.endsWith(T, slice, suffix))
+        slice[0 .. slice.len - suffix.len]
+    else
+        slice;
 }
 
-/// pathWithExtension returns the path with the specified extension
-fn pathWithExtension(allocator: mem.Allocator, path: []const u8, extension: []const u8) ![]const u8 {
-    const path_extension = fs.path.extension(path);
+test "removeSuffix" {
+    const actual = removeSuffix(u8, "hello world", "world");
+    try std.testing.expectEqualStrings("hello ", actual);
+}
+
+/// returns the path with the specified extension. caller owns returned memory.
+fn pathWithExtension(
+    allocator: std.mem.Allocator,
+    path: []const u8,
+    extension: []const u8,
+) ![]const u8 {
+    const path_extension = std.fs.path.extension(path);
     const path_no_extension = removeSuffix(u8, path, path_extension);
-    return fmt.allocPrint(allocator, "{s}.{s}", .{ path_no_extension, extension });
+    return std.fmt.allocPrint(allocator, "{s}.{s}", .{ path_no_extension, extension });
 }
 
-/// trimSpaces removes spaces from the beginning and end of a string
-fn trimAsciiSpaces(slice: []const u8) []const u8 {
-    return mem.trim(u8, slice, &ascii.whitespace);
+test "pathWithExtension" {
+    var example = try pathWithExtension(std.testing.allocator, "mem.tar", "exe");
+    defer std.testing.allocator.free(example);
+    try std.testing.expectEqualStrings("mem.exe", example);
 }
 
 pub fn main() anyerror!void {
-    var arena = heap.ArenaAllocator.init(heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
-    const ally = arena.allocator();
+    const allocator = arena.allocator();
 
-    // Collect arguments
-    const args = try process.argsAlloc(ally);
-
-    // Shim filename
-    var program_path = try fs.selfExePathAlloc(ally);
-    var shim_path = pathWithExtension(ally, program_path, "shim") catch {
+    // Shim filename matches our name
+    const program_path = try std.fs.selfExePathAlloc(allocator);
+    const shim_path = pathWithExtension(allocator, program_path, "shim") catch {
         std.log.err("Cannot make out shim path.", .{});
         return;
     };
 
-    // Place to store the shim file contents
-    var cfg = std.BufMap.init(ally);
+    // Place to store the shim file key-value pairs
+    var cfg = std.BufMap.init(allocator);
 
-    // Open shim file for reading
-    var shim_file = fs.openFileAbsolute(shim_path, .{}) catch {
+    const shim_file = std.fs.openFileAbsolute(shim_path, .{}) catch {
         std.log.err("Unable to open shim file. ({s})", .{shim_path});
         return;
     };
@@ -69,41 +67,39 @@ pub fn main() anyerror!void {
     // Go through the shim file and collect key-value pairs
     const reader = shim_file.reader();
     var line_buf: [1024]u8 = undefined;
-
     while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
         // The lines should look like this: `key = value`
-        // Find index of equals, if it doesn't exist we just skip this line
-        const equals_index = mem.indexOfScalar(u8, line, '=') orelse continue;
-        const key = trimAsciiSpaces(line[0..equals_index]);
-        const value = trimAsciiSpaces(line[equals_index + 1 .. line.len]);
+        var iterator = std.mem.tokenize(u8, line, "= ");
+        const key = iterator.next() orelse continue;
+        const value = iterator.next() orelse continue;
         try cfg.put(key, value);
     }
 
     // Arguments sent to the child process
-    var cmd_args = std.ArrayList([]const u8).init(ally);
+    var cmd_args = std.ArrayList([]const u8).init(allocator);
 
     // Add the program name from shim file
-    if (cfg.get("path")) |cfg_path| {
-        try cmd_args.append(cfg_path);
-    } else {
+    const path = cfg.get("path") orelse {
         std.log.err("`path` not found in shim file", .{});
         return;
-    }
+    };
+    try cmd_args.append(path);
 
     // Pass all arguments from our process except program name
+    const args = try std.process.argsAlloc(allocator);
     try cmd_args.appendSlice(args[1..]);
 
     // Pass all arguments from shim file
     if (cfg.get("args")) |cfg_args| {
-        var it = mem.split(u8, cfg_args, " ");
-        while (it.next()) |cfg_arg| {
-            try cmd_args.append(cfg_arg);
+        var iterator = std.mem.tokenize(u8, cfg_args, " ");
+        while (iterator.next()) |arg| {
+            try cmd_args.append(arg);
         }
     }
 
     try windows.SetConsoleCtrlHandler(handlerRoutine, true);
 
-    // Spawn child process
-    var child = std.ChildProcess.init(cmd_args.items, ally);
+    // Run the actual program
+    var child = std.ChildProcess.init(cmd_args.items, allocator);
     _ = try child.spawnAndWait();
 }
