@@ -13,16 +13,16 @@ export fn handlerRoutine(dwCtrlType: windows.DWORD) callconv(windows.WINAPI) win
     };
 }
 
-/// removes the suffix from the slice.
-fn removeSuffix(comptime T: type, slice: []const T, suffix: []const T) []const T {
+/// returns slice without suffix.
+fn cutSuffix(comptime T: type, slice: []const T, suffix: []const T) []const T {
     return if (std.mem.endsWith(T, slice, suffix))
         slice[0 .. slice.len - suffix.len]
     else
         slice;
 }
 
-test "removeSuffix" {
-    const actual = removeSuffix(u8, "hello world", "world");
+test "cutSuffix" {
+    const actual = cutSuffix(u8, "hello world", "world");
     try std.testing.expectEqualStrings("hello ", actual);
 }
 
@@ -33,7 +33,7 @@ fn pathWithExtension(
     extension: []const u8,
 ) ![]const u8 {
     const path_extension = std.fs.path.extension(path);
-    const path_no_extension = removeSuffix(u8, path, path_extension);
+    const path_no_extension = cutSuffix(u8, path, path_extension);
     return std.fmt.allocPrint(allocator, "{s}.{s}", .{ path_no_extension, extension });
 }
 
