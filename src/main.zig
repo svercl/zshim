@@ -57,22 +57,23 @@ pub fn main() anyerror!void {
 
     // Place to store the shim file key-value pairs
     var cfg = std.BufMap.init(allocator);
+    {
+        const shim_file = std.fs.openFileAbsolute(shim_path, .{}) catch {
+            std.log.err("Unable to open shim file. ({s})", .{shim_path});
+            return;
+        };
+        defer shim_file.close();
 
-    const shim_file = std.fs.openFileAbsolute(shim_path, .{}) catch {
-        std.log.err("Unable to open shim file. ({s})", .{shim_path});
-        return;
-    };
-    defer shim_file.close();
-
-    // Go through the shim file and collect key-value pairs
-    const reader = shim_file.reader();
-    var line_buf: [1024]u8 = undefined;
-    while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
-        // The lines should look like this: `key = value`
-        var iterator = std.mem.tokenize(u8, line, "= ");
-        const key = iterator.next() orelse continue;
-        const value = iterator.next() orelse continue;
-        try cfg.put(key, value);
+        // Go through the shim file and collect key-value pairs
+        const reader = shim_file.reader();
+        var line_buf: [1024]u8 = undefined;
+        while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
+            // The lines should look like this: `key = value`
+            var iterator = std.mem.tokenize(u8, line, "= ");
+            const key = iterator.next() orelse continue;
+            const value = iterator.next() orelse continue;
+            try cfg.put(key, value);
+        }
     }
 
     // Arguments sent to the child process
