@@ -7,7 +7,7 @@ Zig.
 
 Requirements:
 
-- [Zig 0.11.0-dev.1011+40ba4d4a8](https://ziglang.org/)
+- [Zig 0.11.0-dev.1568+c9b957c93](https://ziglang.org/)
 - git
 
 Once you have those, then it's as easy as:
@@ -15,7 +15,7 @@ Once you have those, then it's as easy as:
 ```shell
 git clone https://github.com/svercl/zshim.git
 cd zshim
-zig build -Drelease-safe
+zig build -Doptimize=ReleaseSafe
 ```
 
 ## Installation
