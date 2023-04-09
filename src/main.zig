@@ -64,16 +64,10 @@ pub fn main() anyerror!void {
         };
         defer shim_file.close();
 
-        // Go through the shim file and collect key-value pairs
-        const reader = shim_file.reader();
-        var line_buf: [1024]u8 = undefined;
-        while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
-            // The lines should look like this: `key = value`
-            const equals_index = std.mem.indexOfScalar(u8, line, '=') orelse continue;
-            const key = std.mem.trim(u8, line[0..equals_index], &std.ascii.whitespace);
-            const value = std.mem.trim(u8, line[equals_index+1..], &std.ascii.whitespace);
-            try cfg.put(key, value);
-        }
+        var buffered_reader = std.io.bufferedReader(shim_file.reader());
+        const reader = buffered_reader.reader();
+
+        try readShim(reader, &cfg);
     }
 
     // Arguments sent to the child process
@@ -103,4 +97,36 @@ pub fn main() anyerror!void {
     // Run the actual program
     var child = std.ChildProcess.init(cmd_args.items, allocator);
     _ = try child.spawnAndWait();
+}
+
+/// Reads a shim file into a map.
+///
+/// The file is (usually) multiple key-value pairs separated by a single '=', and
+/// must contain at least a "path", although this is up to the caller to uphold.
+fn readShim(reader: anytype, into: *std.BufMap) !void {
+    // Go through the shim file and collect key-value pairs
+    var line_buf: [1024]u8 = undefined;
+    while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
+        // The lines should look like this: `key = value`
+        const equals_index = std.mem.indexOfScalar(u8, line, '=') orelse continue;
+        const key = std.mem.trim(u8, line[0..equals_index], &std.ascii.whitespace);
+        const value = std.mem.trim(u8, line[equals_index + 1 ..], &std.ascii.whitespace);
+        try into.put(key, value);
+    }
+}
+
+test "parsing valid shim" {
+    var stream = std.io.fixedBufferStream(
+        \\path = C:/Program Files/Git/cmd/git.exe
+        \\args = status
+    );
+    const reader = stream.reader();
+
+    var cfg = std.BufMap.init(std.testing.allocator);
+    defer cfg.deinit();
+
+    _ = try readShim(reader, &cfg);
+
+    try std.testing.expectEqualStrings("C:/Program Files/Git/cmd/git.exe", cfg.get("path") orelse "");
+    try std.testing.expectEqualStrings("status", cfg.get("args") orelse "");
 }
