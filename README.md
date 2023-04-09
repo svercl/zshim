@@ -1,7 +1,6 @@
 # `zshim`
 
-zshim is the [`shim`](https://github.com/71/scoop-better-shimexe/) written in
-Zig.
+zshim is the [`shim`](https://github.com/71/scoop-better-shimexe/).
 
 ## Building
 
