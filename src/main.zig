@@ -69,9 +69,9 @@ pub fn main() anyerror!void {
         var line_buf: [1024]u8 = undefined;
         while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
             // The lines should look like this: `key = value`
-            var iterator = std.mem.tokenize(u8, line, "= ");
-            const key = iterator.next() orelse continue;
-            const value = iterator.next() orelse continue;
+            const equals_index = std.mem.indexOfScalar(u8, line, '=') orelse continue;
+            const key = std.mem.trim(u8, line[0..equals_index], &std.ascii.whitespace);
+            const value = std.mem.trim(u8, line[equals_index+1..], &std.ascii.whitespace);
             try cfg.put(key, value);
         }
     }
