@@ -96,7 +96,10 @@ pub fn main() anyerror!void {
 
     // Run the actual program
     var child = std.ChildProcess.init(cmd_args.items, allocator);
-    _ = try child.spawnAndWait();
+    _ = child.spawnAndWait() catch |err| switch (err) {
+        error.FileNotFound => std.log.err("file not found `{s}`", .{path}),
+        else => std.log.err("{}", .{err}),
+    };
 }
 
 /// Reads a shim file into a map.
