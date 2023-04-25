@@ -102,6 +102,9 @@ pub fn main() anyerror!void {
     };
 }
 
+/// Used for removing quotes on both ends including whitespace.
+const whitespace_with_quotes = std.ascii.whitespace ++ .{'"'};
+
 /// Reads a shim file into a map.
 ///
 /// The file is (usually) multiple key-value pairs separated by a single '=', and
@@ -113,7 +116,7 @@ fn readShim(reader: anytype, into: *std.BufMap) !void {
         // The lines should look like this: `key = value`
         const equals_index = std.mem.indexOfScalar(u8, line, '=') orelse continue;
         const key = std.mem.trim(u8, line[0..equals_index], &std.ascii.whitespace);
-        const value = std.mem.trim(u8, line[equals_index + 1 ..], &std.ascii.whitespace);
+        const value = std.mem.trim(u8, line[equals_index + 1 ..], &whitespace_with_quotes);
         try into.put(key, value);
     }
 }
@@ -131,5 +134,21 @@ test "parsing valid shim" {
     _ = try readShim(reader, &cfg);
 
     try std.testing.expectEqualStrings("C:/Program Files/Git/cmd/git.exe", cfg.get("path") orelse "");
+    try std.testing.expectEqualStrings("status", cfg.get("args") orelse "");
+}
+
+test "parsing valid shim (new style)" {
+    var stream = std.io.fixedBufferStream(
+        \\path = "C:\Program Files\Git\cmd\git.exe"
+        \\args = status
+    );
+    const reader = stream.reader();
+
+    var cfg = std.BufMap.init(std.testing.allocator);
+    defer cfg.deinit();
+
+    _ = try readShim(reader, &cfg);
+
+    try std.testing.expectEqualStrings("C:\\Program Files\\Git\\cmd\\git.exe", cfg.get("path") orelse "");
     try std.testing.expectEqualStrings("status", cfg.get("args") orelse "");
 }
