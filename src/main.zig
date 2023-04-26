@@ -80,10 +80,6 @@ pub fn main() anyerror!void {
     };
     try cmd_args.append(path);
 
-    // Pass all arguments from our process except program name
-    const args = try std.process.argsAlloc(allocator);
-    try cmd_args.appendSlice(args[1..]);
-
     // Pass all arguments from shim file
     if (cfg.get("args")) |cfg_args| {
         var iterator = std.mem.tokenize(u8, cfg_args, " ");
@@ -91,6 +87,10 @@ pub fn main() anyerror!void {
             try cmd_args.append(arg);
         }
     }
+
+    // Pass all arguments from our process except program name
+    const args = try std.process.argsAlloc(allocator);
+    try cmd_args.appendSlice(args[1..]);
 
     try windows.SetConsoleCtrlHandler(handlerRoutine, true);
 
@@ -140,7 +140,7 @@ test "parsing valid shim" {
 test "parsing valid shim (new style)" {
     var stream = std.io.fixedBufferStream(
         \\path = "C:\Program Files\Git\cmd\git.exe"
-        \\args = status
+        \\args = "status"
     );
     const reader = stream.reader();
 
