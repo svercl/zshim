@@ -38,7 +38,7 @@ fn pathWithExtension(
 }
 
 test "pathWithExtension" {
-    var example = try pathWithExtension(std.testing.allocator, "mem.tar", "exe");
+    const example = try pathWithExtension(std.testing.allocator, "mem.tar", "exe");
     defer std.testing.allocator.free(example);
     try std.testing.expectEqualStrings("mem.exe", example);
 }
