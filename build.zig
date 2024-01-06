@@ -1,6 +1,6 @@
-const Builder = @import("std").build.Builder;
+const std = @import("std");
 
-pub fn build(b: *Builder) void {
+pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -9,15 +9,11 @@ pub fn build(b: *Builder) void {
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
+        .link_libc = true,
+        .single_threaded = true,
+        .strip = optimize != .Debug,
     });
-    exe.linkLibC();
     b.installArtifact(exe);
-
-    exe.single_threaded = true;
-
-    if (optimize != .Debug) {
-        exe.strip = true;
-    }
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
