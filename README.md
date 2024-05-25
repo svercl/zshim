@@ -6,7 +6,7 @@ zshim is the [`shim`](https://github.com/71/scoop-better-shimexe/).
 
 Requirements:
 
-- [Zig 0.11.0-dev.1568+c9b957c93](https://ziglang.org/)
+- [Zig 0.12.0](https://ziglang.org/)
 - git
 
 Once you have those, then it's as easy as:

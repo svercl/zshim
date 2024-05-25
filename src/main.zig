@@ -43,7 +43,7 @@ test "pathWithExtension" {
     try std.testing.expectEqualStrings("mem.exe", example);
 }
 
-pub fn main() anyerror!void {
+pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
@@ -67,7 +67,7 @@ pub fn main() anyerror!void {
         var buffered_reader = std.io.bufferedReader(shim_file.reader());
         const reader = buffered_reader.reader();
 
-        try readShim(reader, &cfg);
+        try readShim(reader.any(), &cfg);
     }
 
     // Arguments sent to the child process
@@ -109,7 +109,7 @@ const whitespace_with_quotes = std.ascii.whitespace ++ .{'"'};
 ///
 /// The file is (usually) multiple key-value pairs separated by a single '=', and
 /// must contain at least a "path", although this is up to the caller to uphold.
-fn readShim(reader: anytype, into: *std.BufMap) !void {
+fn readShim(reader: std.io.AnyReader, into: *std.BufMap) !void {
     // Go through the shim file and collect key-value pairs
     var line_buf: [1024]u8 = undefined;
     while (try reader.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
@@ -131,7 +131,7 @@ test "parsing valid shim" {
     var cfg = std.BufMap.init(std.testing.allocator);
     defer cfg.deinit();
 
-    _ = try readShim(reader, &cfg);
+    _ = try readShim(reader.any(), &cfg);
 
     try std.testing.expectEqualStrings("C:/Program Files/Git/cmd/git.exe", cfg.get("path") orelse "");
     try std.testing.expectEqualStrings("status", cfg.get("args") orelse "");
@@ -147,7 +147,7 @@ test "parsing valid shim (new style)" {
     var cfg = std.BufMap.init(std.testing.allocator);
     defer cfg.deinit();
 
-    _ = try readShim(reader, &cfg);
+    _ = try readShim(reader.any(), &cfg);
 
     try std.testing.expectEqualStrings("C:\\Program Files\\Git\\cmd\\git.exe", cfg.get("path") orelse "");
     try std.testing.expectEqualStrings("status", cfg.get("args") orelse "");
