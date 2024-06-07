@@ -95,7 +95,7 @@ pub fn main() !void {
     try windows.SetConsoleCtrlHandler(handlerRoutine, true);
 
     // Run the actual program
-    var child = std.ChildProcess.init(cmd_args.items, allocator);
+    var child = std.process.Child.init(cmd_args.items, allocator);
     _ = child.spawnAndWait() catch |err| switch (err) {
         error.FileNotFound => std.log.err("file not found `{s}`", .{path}),
         else => std.log.err("{}", .{err}),
